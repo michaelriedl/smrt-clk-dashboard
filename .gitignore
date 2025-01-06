@@ -1,3 +1,6 @@
+# Custom for this repository
+dev/
+
 # Byte-compiled / optimized / DLL files
 *__pycache__/
 *.py[cod]

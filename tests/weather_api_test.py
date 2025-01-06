@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import time
+
 from smrtclk.weather.weather_api import WeatherAPI
 
 
