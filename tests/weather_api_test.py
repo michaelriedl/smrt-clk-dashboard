@@ -5,9 +5,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import time
 
+import dotenv
 import pytest
 
 from smrtclk.weather.weather_api import WeatherAPI
+
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 @pytest.mark.parametrize(
@@ -29,3 +32,27 @@ def test_init(latitude, longitude):
     assert weather._location_cache is None
     assert weather._forecast_cache is None
     assert weather._forecast_cache_date is None
+
+
+def test_get_location():
+    # Load the .env file
+    dotenv.load_dotenv(os.path.join(TEST_DIR, "..", ".env"))
+    # Get the LAT_LON_LOCATION variable
+    LAT_LON_LOCATION = os.getenv("LAT_LON_LOCATION")
+    # Convert the latitude and longitude to floats
+    latitude, longitude = LAT_LON_LOCATION.split(",")
+    latitude = float(latitude)
+    longitude = float(longitude)
+    # Create the WeatherAPI object
+    weather = WeatherAPI(latitude=latitude, longitude=longitude)
+    # Get the location data
+    weather._get_location()
+    # Check the location cache
+    assert weather._location_cache is not None
+    assert weather._location_cache == "33,35"
+
+    # Test latitude and longitude outside of the valid range
+    weather = WeatherAPI(latitude=0, longitude=0)
+    # Check that warning is raised
+    with pytest.warns(UserWarning):
+        weather._get_location()
