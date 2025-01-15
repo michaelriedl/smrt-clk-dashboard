@@ -11,6 +11,47 @@ GRIDPOINTS_URL = "gridpoints/"
 FORECAST_URL = "forecast/"
 
 
+def get_json_requests_retry(url: str) -> dict:
+    """Get the JSON data from the given URL with retry.
+
+    Parameters
+    ----------
+    url : str
+        The URL to get the JSON data from.
+
+    Returns
+    -------
+    dict
+        The JSON data from the URL.
+    """
+    try:
+        # Setup the retry strategy
+        retry = Retry(
+            total=5,
+            backoff_factor=2,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        # Create the HTTP adapter
+        adapter = HTTPAdapter(max_retries=retry)
+        # Create the session
+        session = requests.Session()
+        session.mount("https://", adapter)
+        # Get the JSON data
+        r = session.get(url)
+        if r.status_code != 200:
+            warnings.warn(
+                f"Error getting JSON data: {r.status_code}\n\nJSON data will not be available."
+            )
+            return
+        # Return the JSON data
+        return r.json()
+    except Exception as e:
+        warnings.warn(
+            f"Error getting JSON data: {e}\n\nJSON data will not be available."
+        )
+        return
+
+
 class WeatherAPI:
     """Class to handle the weather API."""
 
@@ -38,31 +79,26 @@ class WeatherAPI:
         # Get the URL for the location
         url = f"{BASE_API_URL}{POINTS_URL}{self.latitude},{self.longitude}"
         # Get the location data with retry
-        try:
-            # Setup the retry strategy
-            retry = Retry(
-                total=5,
-                backoff_factor=2,
-                status_forcelist=[429, 500, 502, 503, 504],
-            )
-            # Create the HTTP adapter
-            adapter = HTTPAdapter(max_retries=retry)
-            # Create the session
-            session = requests.Session()
-            session.mount("https://", adapter)
-            # Get the location data
-            r = session.get(url)
-            if r.status_code != 200:
-                warnings.warn(
-                    f"Error getting location data: {r.status_code}\n\nLocation data will not be available."
-                )
-                return
-            # Extract the location data from the response JSON
-            location_data = r.json()
-            # Cache the location data
-            self._location_cache = f"{location_data['properties']['gridX']},{location_data['properties']['gridY']}"
+        location_data = get_json_requests_retry(url)
+        # Cache the location data
+        if location_data is not None:
+            self._location_cache = f"{location_data['properties']['gridId']}/{location_data['properties']['gridX']},{location_data['properties']['gridY']}"
 
-        except Exception as e:
-            warnings.warn(
-                f"Error getting location data: {e}\n\nLocation data will not be available."
-            )
+    def _get_forecast(self):
+        """Gets the forecast data for the given latitude and longitude."""
+        # If the location cache is None, get the location data
+        if self._location_cache is None:
+            self._get_location()
+        # Get the URL for the forecast
+        url = f"{BASE_API_URL}{GRIDPOINTS_URL}{self._location_cache}/{FORECAST_URL}"
+        # Get the forecast data with retry
+        forecast_data = get_json_requests_retry(url)
+        # Cache the forecast data
+        self._forecast_cache = forecast_data
+        self._forecast_cache_date = time.strftime("%Y-%m-%d-%H-%M-%S")
+
+    def _get_sunrise_sunset(self):
+        pass
+
+    def get_current_weather(self):
+        pass

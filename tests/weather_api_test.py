@@ -49,7 +49,7 @@ def test_get_location():
     weather._get_location()
     # Check the location cache
     assert weather._location_cache is not None
-    assert weather._location_cache == "33,35"
+    assert weather._location_cache == "OKX/33,35"
 
     # Test latitude and longitude outside of the valid range
     weather = WeatherAPI(latitude=0, longitude=0)
