@@ -94,11 +94,16 @@ class WeatherAPI:
         # Get the forecast data with retry
         forecast_data = get_json_requests_retry(url)
         # Cache the forecast data
-        self._forecast_cache = forecast_data
-        self._forecast_cache_date = time.strftime("%Y-%m-%d-%H-%M-%S")
+        if forecast_data is not None:
+            self._forecast_cache = forecast_data
+            self._forecast_cache_date = time.strftime("%Y-%m-%d-%H-%M-%S")
+
+    def _parse_forecast(self):
+        pass
 
     def _get_sunrise_sunset(self):
         pass
 
     def get_current_weather(self):
-        pass
+        self._get_forecast()
+        return self._parse_forecast()

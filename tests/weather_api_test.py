@@ -56,3 +56,27 @@ def test_get_location():
     # Check that warning is raised
     with pytest.warns(UserWarning):
         weather._get_location()
+
+
+def test_get_forecast():
+    # Load the .env file
+    dotenv.load_dotenv(os.path.join(TEST_DIR, "..", ".env"))
+    # Get the LAT_LON_LOCATION variable
+    LAT_LON_LOCATION = os.getenv("LAT_LON_LOCATION")
+    # Convert the latitude and longitude to floats
+    latitude, longitude = LAT_LON_LOCATION.split(",")
+    latitude = float(latitude)
+    longitude = float(longitude)
+    # Create the WeatherAPI object
+    weather = WeatherAPI(latitude=latitude, longitude=longitude)
+    # Get the forecast data
+    weather._get_forecast()
+    # Check the forecast cache
+    assert weather._forecast_cache is not None
+    assert weather._forecast_cache_date == time.strftime("%Y-%m-%d-%H-%M-%S")
+
+    # Test latitude and longitude outside of the valid range
+    weather = WeatherAPI(latitude=0, longitude=0)
+    # Check that warning is raised
+    with pytest.warns(UserWarning):
+        weather._get_forecast()
