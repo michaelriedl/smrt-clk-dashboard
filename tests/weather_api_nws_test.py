@@ -34,6 +34,69 @@ def test_init(latitude, longitude):
     assert weather._forecast_cache_date is None
 
 
+@pytest.mark.parametrize(
+    "latitude, longitude",
+    [
+        ("0", 0),
+        (0, "0"),
+        (0.0, 0),
+        (0, 0.0),
+        (0.0, 0.0),
+    ],
+)
+def test_init_type_error(latitude, longitude):
+    if isinstance(latitude, str) or isinstance(longitude, str):
+        with pytest.raises(TypeError):
+            WeatherAPINWS(latitude=latitude, longitude=longitude)
+    else:
+        weather = WeatherAPINWS(latitude=latitude, longitude=longitude)
+        assert weather.latitude == latitude
+        assert weather.longitude == longitude
+        assert weather.current_date == time.strftime("%Y-%m-%d")
+        assert weather._location_cache is None
+        assert weather._forecast_cache is None
+        assert weather._forecast_cache_date is None
+
+
+def test_setters():
+    # Load the .env file
+    dotenv.load_dotenv(os.path.join(TEST_DIR, "..", ".env"))
+    # Get the LAT_LON_LOCATION variable
+    LAT_LON_LOCATION = os.getenv("LAT_LON_LOCATION")
+    # Convert the latitude and longitude to floats
+    latitude, longitude = LAT_LON_LOCATION.split(",")
+    latitude = float(latitude)
+    longitude = float(longitude)
+    weather = WeatherAPINWS(latitude=latitude, longitude=longitude)
+    weather._get_location()
+    assert weather._location_cache is not None
+    # Test setting latitude
+    weather.latitude = 1
+    assert weather.latitude == 1
+    assert weather._location_cache is None
+    # Reset the location cache
+    weather.latitude = latitude
+    weather._get_location()
+    # Test setting longitude
+    weather.longitude = 1
+    assert weather.longitude == 1
+    assert weather._location_cache is None
+
+    # Test setting latitude outside of the valid range
+    with pytest.raises(ValueError):
+        weather.latitude = 91
+    # Test setting longitude outside of the valid range
+    with pytest.raises(ValueError):
+        weather.longitude = 181
+
+    # Test setting latitude to a string
+    with pytest.raises(TypeError):
+        weather.latitude = "1"
+    # Test setting longitude to a string
+    with pytest.raises(TypeError):
+        weather.longitude = "1"
+
+
 def test_get_location():
     # Load the .env file
     dotenv.load_dotenv(os.path.join(TEST_DIR, "..", ".env"))

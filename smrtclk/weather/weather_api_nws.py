@@ -81,8 +81,37 @@ class WeatherAPINWS(WeatherAPI):
         self._forecast_cache = None
         self._forecast_cache_date = None
 
+    @property
+    def latitude(self):
+        return self._latitude
+
+    @property
+    def longitude(self):
+        return self._longitude
+
+    @latitude.setter
+    def latitude(self, latitude):
+        if not isinstance(latitude, (int, float)):
+            raise TypeError("Latitude must be an int or float")
+        if latitude < -90 or latitude > 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        self._latitude = latitude
+        self._location_cache = None
+
+    @longitude.setter
+    def longitude(self, longitude):
+        if not isinstance(longitude, (int, float)):
+            raise TypeError("Longitude must be an int or float")
+        if longitude < -180 or longitude > 180:
+            raise ValueError("Longitude must be between -180 and 180")
+        self._longitude = longitude
+        self._location_cache = None
+
     def _get_location(self):
         """Gets the location of the given latitude and longitude for use with the NWS API."""
+        # If the location cache is not None, return
+        if self._location_cache is not None:
+            return
         # Get the URL for the location
         url = f"{BASE_API_URL}{POINTS_URL}{self.latitude},{self.longitude}"
         # Get the location data with retry
