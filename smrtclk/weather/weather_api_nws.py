@@ -107,7 +107,7 @@ class WeatherAPINWS(WeatherAPI):
         self._longitude = longitude
         self._location_cache = None
 
-    def _get_location(self):
+    def _get_location(self) -> None:
         """Gets the location of the given latitude and longitude for use with the NWS API."""
         # If the location cache is not None, return
         if self._location_cache is not None:
@@ -120,7 +120,7 @@ class WeatherAPINWS(WeatherAPI):
         if location_data is not None:
             self._location_cache = f"{location_data['properties']['gridId']}/{location_data['properties']['gridX']},{location_data['properties']['gridY']}"
 
-    def _get_forecast(self):
+    def _get_forecast(self) -> None:
         """Gets the forecast data for the given latitude and longitude."""
         # If the location cache is None, get the location data
         if self._location_cache is None:
@@ -134,12 +134,35 @@ class WeatherAPINWS(WeatherAPI):
             self._forecast_cache = forecast_data
             self._forecast_cache_date = time.strftime("%Y-%m-%d-%H-%M-%S")
 
-    def _parse_forecast(self):
+    def _parse_forecast(self) -> dict:
+        # Find the forecast periods for today and tonight
+        today, tonight = None, None
+        for period in self._forecast_cache["properties"]["periods"]:
+            if period["name"] == "Today":
+                today = period
+            elif period["name"] == "Tonight":
+                tonight = period
+
+    def _get_sunrise_sunset(self) -> dict:
         pass
 
-    def _get_sunrise_sunset(self):
-        pass
+    def get_current_weather(self) -> dict:
+        """Gets the current weather for the given location. The return value is a dictionary with the weather data.
 
-    def get_current_weather(self):
+        It is expected that the dictionary will have the following keys:
+        - temperature: The current temperature in degrees Fahrenheit.
+        - temperature_min: The minimum temperature for the day in degrees Fahrenheit.
+        - temperature_max: The maximum temperature for the day in degrees Fahrenheit.
+        - precipitation: The current chance of precipitation percentage.
+        - precipitation_min: The minimum chance of precipitation percentage for the day.
+        - precipitation_max: The maximum chance of precipitation percentage for the day.
+        - sunrise: The time of sunrise in the format HH:MM.
+        - sunset: The time of sunset in the format HH:MM.
+
+        Returns
+        -------
+        dict
+            The current weather data.
+        """
         self._get_forecast()
         return self._parse_forecast()
