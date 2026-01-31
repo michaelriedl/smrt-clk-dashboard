@@ -13,7 +13,7 @@ GRIDPOINTS_URL = "gridpoints/"
 FORECAST_URL = "forecast/"
 
 
-def get_json_requests_retry(url: str) -> dict:
+def get_json_requests_retry(url: str) -> dict | None:
     """Get the JSON data from the given URL with retry.
 
     Parameters
@@ -136,14 +136,20 @@ class WeatherAPINWS(WeatherAPI):
 
     def _parse_forecast(self) -> dict:
         # Find the forecast periods for today and tonight
+        if self._forecast_cache is None:
+            return {}
+        
         today, tonight = None, None
         for period in self._forecast_cache["properties"]["periods"]:
             if period["name"] == "Today":
                 today = period
             elif period["name"] == "Tonight":
                 tonight = period
+        
+        # Return weather data (placeholder implementation)
+        return {}
 
-    def _get_sunrise_sunset(self) -> dict:
+    def _get_sunrise_sunset(self) -> dict | None:
         pass
 
     def get_current_weather(self) -> dict:
