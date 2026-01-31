@@ -48,7 +48,7 @@ def get_json_requests_retry(url: str) -> dict | None:
         if r.status_code != 200:
             warnings.warn(
                 f"Error getting JSON data: {r.status_code}\n\nJSON data will not be available.",
-                stacklevel=2
+                stacklevel=2,
             )
             return
         # Return the JSON data
@@ -56,7 +56,7 @@ def get_json_requests_retry(url: str) -> dict | None:
     except Exception as e:
         warnings.warn(
             f"Error getting JSON data: {e}\n\nJSON data will not be available.",
-            stacklevel=2
+            stacklevel=2,
         )
         return
 
