@@ -4,21 +4,17 @@ version = "0.1.0"
 description = "The dashboard implementation for the SMRT CLK hardware"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "python-dotenv>=1.0.0",
-    "PyQt5>=5.15.0",
-    "requests>=2.31.0",
-]
+dependencies = ["python-dotenv>=1.0.0", "PyQt5>=5.15.0", "requests>=2.31.0"]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "ruff>=0.8.0",
-]
+dev = ["pytest>=8.0.0", "ruff>=0.8.0"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["smrtclk"]
 
 [tool.ruff]
 line-length = 88
@@ -26,37 +22,28 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = [
-    "E",     # pycodestyle errors
-    "W",     # pycodestyle warnings
-    "F",     # pyflakes
-    "I",     # isort
-    "B",     # flake8-bugbear
-    "C4",    # flake8-comprehensions
-    "UP",    # pyupgrade
-    "ARG",   # flake8-unused-arguments
-    "SIM",   # flake8-simplify
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
 ]
 ignore = [
-    "E501",  # line too long (handled by formatter)
-    "B008",  # do not perform function calls in argument defaults
-    "B905",  # zip strict parameter
+    "E501", # line too long (handled by formatter)
+    "B008", # do not perform function calls in argument defaults
+    "B905", # zip strict parameter
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # unused imports in __init__.py
-"tests/**/*.py" = ["ARG", "S101"]  # Allow unused arguments and assert in tests
+"__init__.py" = ["F401"]          # unused imports in __init__.py
+"tests/**/*.py" = ["ARG", "S101"] # Allow unused arguments and assert in tests
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_functions = ["test_*"]
 addopts = "-v --strict-markers"
-
-[tool.ty]
-strict = true
-disallow_untyped_defs = true
-disallow_any_unimported = false
-no_implicit_optional = true
-warn_return_any = true
-warn_unused_ignores = true
-show_error_codes = true
