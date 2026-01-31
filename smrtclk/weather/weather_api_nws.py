@@ -47,14 +47,16 @@ def get_json_requests_retry(url: str) -> dict | None:
         r = session.get(url)
         if r.status_code != 200:
             warnings.warn(
-                f"Error getting JSON data: {r.status_code}\n\nJSON data will not be available."
+                f"Error getting JSON data: {r.status_code}\n\nJSON data will not be available.",
+                stacklevel=2
             )
             return
         # Return the JSON data
         return r.json()
     except Exception as e:
         warnings.warn(
-            f"Error getting JSON data: {e}\n\nJSON data will not be available."
+            f"Error getting JSON data: {e}\n\nJSON data will not be available.",
+            stacklevel=2
         )
         return
 
@@ -138,16 +140,16 @@ class WeatherAPINWS(WeatherAPI):
         # Find the forecast periods for today and tonight
         if self._forecast_cache is None:
             return {}
-        
+
         today, tonight = None, None
         for period in self._forecast_cache["properties"]["periods"]:
             if period["name"] == "Today":
                 today = period
             elif period["name"] == "Tonight":
                 tonight = period
-        
+
         # Return weather data (placeholder implementation)
-        return {}
+        return {today, tonight}
 
     def _get_sunrise_sunset(self) -> dict | None:
         pass
