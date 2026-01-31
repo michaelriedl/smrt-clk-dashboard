@@ -144,12 +144,12 @@ class WeatherAPINWS(WeatherAPI):
         today, tonight = None, None
         for period in self._forecast_cache["properties"]["periods"]:
             if period["name"] == "Today":
-                today = period
+                today = period  # noqa: F841
             elif period["name"] == "Tonight":
-                tonight = period
+                tonight = period  # noqa: F841
 
         # Return weather data (placeholder implementation)
-        return {today, tonight}
+        return {}
 
     def _get_sunrise_sunset(self) -> dict | None:
         pass
