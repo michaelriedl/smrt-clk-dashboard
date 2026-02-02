@@ -3,4 +3,4 @@
 from .clock_controller import ClockController
 from .weather_controller import WeatherController
 
-__all__ = ['ClockController', 'WeatherController']
+__all__ = ["ClockController", "WeatherController"]

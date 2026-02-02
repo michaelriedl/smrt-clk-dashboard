@@ -2,7 +2,7 @@
 
 import datetime
 from dataclasses import dataclass
-from typing import Optional
+
 from PyQt5.QtCore import QObject, pyqtSignal
 
 
@@ -10,7 +10,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 class WeatherData:
     """
     Data class for weather information.
-    
+
     Attributes:
         current_temp: Current temperature in Fahrenheit
         min_temp: Minimum temperature for the day
@@ -20,7 +20,7 @@ class WeatherData:
         sunrise: Sunrise time
         sunset: Sunset time
     """
-    
+
     current_temp: float
     min_temp: float
     max_temp: float
@@ -33,43 +33,43 @@ class WeatherData:
 class WeatherModel(QObject):
     """
     Model for managing weather data.
-    
+
     Handles parsing and storing weather information from API responses.
-    
+
     Signals:
         weatherUpdated: Emitted when weather data is updated
     """
-    
+
     # Signals
     weatherUpdated = pyqtSignal(WeatherData)
-    
+
     def __init__(self):
         """Initialize the weather model."""
         super().__init__()
-        self._weather_data: Optional[WeatherData] = None
-    
+        self._weather_data: WeatherData | None = None
+
     @property
-    def weather_data(self) -> Optional[WeatherData]:
+    def weather_data(self) -> WeatherData | None:
         """Get current weather data."""
         return self._weather_data
-    
+
     def update_from_api_response(self, response_data: dict) -> None:
         """
         Parse and update weather data from API response.
-        
+
         Args:
             response_data: Dictionary containing weather API response
         """
         # TODO: Implement parsing of API response
         pass
-    
-    def validate_data(self, data: dict) -> bool:
+
+    def validate_data(self, data: dict) -> bool:  # noqa: ARG002
         """
         Validate weather data structure.
-        
+
         Args:
             data: Dictionary to validate
-            
+
         Returns:
             True if data is valid, False otherwise
         """
