@@ -33,10 +33,12 @@ class ClockController(QObject):
 
     def _connectSignals(self) -> None:
         """Connect model signals to view update methods."""
-        # TODO: Connect model.timeChanged to update methods
-        # TODO: Connect model.minuteChanged to minute hand update
-        # TODO: Connect model.dayChanged to date update
-        pass
+        # Update second hand on every time change
+        self.model.timeChanged.connect(self._updateSecondHand)
+        # Update minute and hour hands when minute changes
+        self.model.minuteChanged.connect(self._updateMinuteHand)
+        # Update date display when day changes
+        self.model.dayChanged.connect(self._updateDate)
 
     def _setupTimer(self) -> None:
         """Configure and start the update timer."""
@@ -54,23 +56,27 @@ class ClockController(QObject):
     @pyqtSlot()
     def _onTimerTick(self) -> None:
         """Handle timer tick event."""
-        # TODO: Update model time, which will trigger signals
-        pass
+        # Update model, which will emit signals to update the view
+        self.model.update_time()
 
     @pyqtSlot()
     def _updateSecondHand(self) -> None:
         """Update the second hand position."""
-        # TODO: Calculate angle and update view
-        pass
+        angle = self.model.calculate_hand_angle("sec")
+        self.view.updateHand("sec", angle)
 
     @pyqtSlot()
     def _updateMinuteHand(self) -> None:
         """Update the minute and hour hand positions."""
-        # TODO: Calculate angles and update view
-        pass
+        # Update minute hand
+        min_angle = self.model.calculate_hand_angle("min")
+        self.view.updateHand("min", min_angle)
+        # Update hour hand
+        hour_angle = self.model.calculate_hand_angle("hour")
+        self.view.updateHand("hour", hour_angle)
 
     @pyqtSlot()
     def _updateDate(self) -> None:
         """Update the date display."""
-        # TODO: Get formatted date and update view
-        pass
+        date_string = self.model.get_formatted_date()
+        self.view.updateDate(date_string)

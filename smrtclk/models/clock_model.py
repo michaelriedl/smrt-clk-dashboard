@@ -52,10 +52,20 @@ class ClockModel(QObject):
         Emits timeChanged always, minuteChanged when minute changes,
         and dayChanged when day changes.
         """
-        # TODO: Implement time update logic
-        pass
+        self._current_time = datetime.datetime.now()
+        self.timeChanged.emit(self._current_time)
 
-    def calculate_hand_angle(self, hand_type: str) -> float:  # noqa: ARG002
+        # Check if minute has changed
+        if self._current_time.minute != self._last_minute:
+            self._last_minute = self._current_time.minute
+            self.minuteChanged.emit(self._current_time)
+
+        # Check if day has changed
+        if self._current_time.day != self._last_day:
+            self._last_day = self._current_time.day
+            self.dayChanged.emit(self._current_time)
+
+    def calculate_hand_angle(self, hand_type: str) -> float:
         """
         Calculate the angle for a clock hand.
 
@@ -65,8 +75,19 @@ class ClockModel(QObject):
         Returns:
             Angle in degrees for the specified hand
         """
-        # TODO: Implement angle calculation
-        return 0.0
+        now = self._current_time
+
+        if hand_type == "hour":
+            # Hour hand: 30 degrees per hour + 0.5 degrees per minute
+            return ((now.hour % 12) + now.minute / 60.0) * 30.0
+        elif hand_type == "min":
+            # Minute hand: 6 degrees per minute
+            return now.minute * 6.0
+        elif hand_type == "sec":
+            # Second hand: 6 degrees per second
+            return now.second * 6.0
+        else:
+            return 0.0
 
     def get_formatted_date(self) -> str:
         """
@@ -75,5 +96,18 @@ class ClockModel(QObject):
         Returns:
             Formatted date string (e.g., "Monday February 1st 2026")
         """
-        # TODO: Implement date formatting with ordinal suffix
-        return ""
+        now = self._current_time
+
+        # Determine ordinal suffix
+        day = now.day
+        if day in (1, 21, 31):
+            suffix = "st"
+        elif day in (2, 22):
+            suffix = "nd"
+        elif day in (3, 23):
+            suffix = "rd"
+        else:
+            suffix = "th"
+
+        # Format: "Monday February 1st 2026"
+        return f"{now:%A %B} {day}<sup>{suffix}</sup> {now.year}"
