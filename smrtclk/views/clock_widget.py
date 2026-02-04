@@ -105,7 +105,7 @@ class ClockWidget(QWidget):
         self._date_label.setStyleSheet(Styles.get_text_style("datex", font_size))
 
         # Position at bottom center with padding to prevent cutoff
-        self._date_label.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
+        self._date_label.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)  # ty: ignore[unresolved-attribute]
         self._date_label.setGeometry(0, 0, self.config.width, self.config.height - 5)
 
     def updateHand(self, hand_type: str, angle: float) -> None:
@@ -133,7 +133,8 @@ class ClockWidget(QWidget):
         transform.rotate(angle)
 
         transformed_pixmap = original_pixmap.transformed(
-            transform, Qt.SmoothTransformation
+            transform,
+            Qt.SmoothTransformation,  # ty: ignore[unresolved-attribute]
         )
         hand["pixmap"][1] = transformed_pixmap
         label.setPixmap(transformed_pixmap)

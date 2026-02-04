@@ -44,7 +44,7 @@ class ClockMainWindow(QMainWindow):
         """Configure main window properties."""
         self.setWindowTitle("Smart Clock Dashboard")
         self.setFixedSize(self.config.width, self.config.height)
-        self.setCursor(Qt.BlankCursor)
+        self.setCursor(Qt.BlankCursor)  # ty: ignore[unresolved-attribute]
 
     def _createCentralWidget(self) -> None:
         """Create and set the central widget."""
