@@ -179,7 +179,9 @@ class WeatherAPI(ABC):
         # Return cached data if valid
         if self._is_cache_valid():
             logger.debug("Returning cached weather data")
-            cached_data = self._weather_cache.copy() if self._weather_cache else {}
+            cached_data: WeatherData = (
+                self._weather_cache.copy() if self._weather_cache else {}
+            )
             cached_data["status"] = "cached"
             return cached_data
 
