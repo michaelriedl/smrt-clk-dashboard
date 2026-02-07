@@ -1,11 +1,12 @@
-import time
-import warnings
+import logging
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from .weather_api import WeatherAPI
+from .weather_api import WeatherAPI, WeatherData
+
+logger = logging.getLogger(__name__)
 
 BASE_API_URL = "https://api.weather.gov/"
 POINTS_URL = "points/"
@@ -13,7 +14,7 @@ GRIDPOINTS_URL = "gridpoints/"
 FORECAST_URL = "forecast/"
 
 
-def get_json_requests_retry(url: str) -> dict | None:
+def get_json_requests_retry(url: str) -> dict:
     """Get the JSON data from the given URL with retry.
 
     Parameters
@@ -28,8 +29,8 @@ def get_json_requests_retry(url: str) -> dict | None:
 
     Raises
     ------
-    UserWarning
-        If there is an error getting the JSON data.
+    Exception
+        If there is an error getting the JSON data or non-200 status code.
     """
     try:
         # Setup the retry strategy
@@ -46,25 +47,22 @@ def get_json_requests_retry(url: str) -> dict | None:
         # Get the JSON data
         r = session.get(url)
         if r.status_code != 200:
-            warnings.warn(
-                f"Error getting JSON data: {r.status_code}\n\nJSON data will not be available.",
-                stacklevel=2,
-            )
-            return
+            logger.error(f"Error getting JSON data: HTTP {r.status_code}")
+            raise Exception(f"HTTP {r.status_code}: Failed to retrieve data from {url}")
         # Return the JSON data
         return r.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error getting JSON data: {e}")
+        raise
     except Exception as e:
-        warnings.warn(
-            f"Error getting JSON data: {e}\n\nJSON data will not be available.",
-            stacklevel=2,
-        )
-        return
+        logger.error(f"Unexpected error getting JSON data: {e}")
+        raise
 
 
 class WeatherAPINWS(WeatherAPI):
     """Weather API that connects to the National Weather Service (NWS)."""
 
-    def __init__(self, latitude: float, longitude: float):
+    def __init__(self, latitude: float, longitude: float, cache_duration: int = 900):
         """Initializes the WeatherAPINWS class.
 
         Parameters
@@ -73,104 +71,121 @@ class WeatherAPINWS(WeatherAPI):
             The latitude of the location to get the weather for.
         longitude : float
             The longitude of the location to get the weather for.
+        cache_duration : int, optional
+            Cache duration in seconds (default: 900 = 15 minutes).
         """
-        # Store the latitude and longitude
-        self.latitude = latitude
-        self.longitude = longitude
-        # Create the needed variables for the class
-        self.current_date = time.strftime("%Y-%m-%d")
-        self._location_cache = None
-        self._forecast_cache = None
-        self._forecast_cache_date = None
+        # Call parent constructor
+        super().__init__(latitude, longitude, cache_duration)
+        # NWS-specific cache for location data
+        self._location_cache: str | None = None
 
-    @property
-    def latitude(self):
-        return self._latitude
+    def _get_location(self) -> str:
+        """Gets the location of the given latitude and longitude for use with the NWS API.
 
-    @property
-    def longitude(self):
-        return self._longitude
+        Returns
+        -------
+        str
+            The grid location string (e.g., "TOP/31,80").
 
-    @latitude.setter
-    def latitude(self, latitude):
-        if not isinstance(latitude, (int, float)):
-            raise TypeError("Latitude must be an int or float")
-        if latitude < -90 or latitude > 90:
-            raise ValueError("Latitude must be between -90 and 90")
-        self._latitude = latitude
-        self._location_cache = None
-
-    @longitude.setter
-    def longitude(self, longitude):
-        if not isinstance(longitude, (int, float)):
-            raise TypeError("Longitude must be an int or float")
-        if longitude < -180 or longitude > 180:
-            raise ValueError("Longitude must be between -180 and 180")
-        self._longitude = longitude
-        self._location_cache = None
-
-    def _get_location(self) -> None:
-        """Gets the location of the given latitude and longitude for use with the NWS API."""
-        # If the location cache is not None, return
+        Raises
+        ------
+        Exception
+            If unable to retrieve location data.
+        """
+        # If the location cache is not None, return it
         if self._location_cache is not None:
-            return
+            return self._location_cache
+
         # Get the URL for the location
         url = f"{BASE_API_URL}{POINTS_URL}{self.latitude},{self.longitude}"
+        logger.debug(f"Fetching NWS location data from: {url}")
+
         # Get the location data with retry
         location_data = get_json_requests_retry(url)
-        # Cache the location data
-        if location_data is not None:
-            self._location_cache = f"{location_data['properties']['gridId']}/{location_data['properties']['gridX']},{location_data['properties']['gridY']}"
 
-    def _get_forecast(self) -> None:
-        """Gets the forecast data for the given latitude and longitude."""
-        # If the location cache is None, get the location data
-        if self._location_cache is None:
-            self._get_location()
-        # Get the URL for the forecast
-        url = f"{BASE_API_URL}{GRIDPOINTS_URL}{self._location_cache}/{FORECAST_URL}"
-        # Get the forecast data with retry
-        forecast_data = get_json_requests_retry(url)
-        # Cache the forecast data
-        if forecast_data is not None:
-            self._forecast_cache = forecast_data
-            self._forecast_cache_date = time.strftime("%Y-%m-%d-%H-%M-%S")
+        # Cache and return the location data
+        self._location_cache = (
+            f"{location_data['properties']['gridId']}/"
+            f"{location_data['properties']['gridX']},"
+            f"{location_data['properties']['gridY']}"
+        )
+        logger.info(f"NWS location resolved to: {self._location_cache}")
+        return self._location_cache
 
-    def _parse_forecast(self) -> dict:
-        # Find the forecast periods for today and tonight
-        if self._forecast_cache is None:
-            return {}
+    def _invalidate_cache(self) -> None:
+        """Override to also invalidate NWS-specific location cache."""
+        super()._invalidate_cache()
+        self._location_cache = None
 
-        today, tonight = None, None
-        for period in self._forecast_cache["properties"]["periods"]:
-            if period["name"] == "Today":
-                today = period  # noqa: F841
-            elif period["name"] == "Tonight":
-                tonight = period  # noqa: F841
-
-        # Return weather data (placeholder implementation)
-        return {}
-
-    def _get_sunrise_sunset(self) -> dict | None:
-        pass
-
-    def get_current_weather(self) -> dict:
-        """Gets the current weather for the given location. The return value is a dictionary with the weather data.
-
-        It is expected that the dictionary will have the following keys:
-        - temperature: The current temperature in degrees Fahrenheit.
-        - temperature_min: The minimum temperature for the day in degrees Fahrenheit.
-        - temperature_max: The maximum temperature for the day in degrees Fahrenheit.
-        - precipitation: The current chance of precipitation percentage.
-        - precipitation_min: The minimum chance of precipitation percentage for the day.
-        - precipitation_max: The maximum chance of precipitation percentage for the day.
-        - sunrise: The time of sunrise in the format HH:MM.
-        - sunset: The time of sunset in the format HH:MM.
+    def _fetch_weather_data(self) -> dict:
+        """Fetch raw weather data from NWS API.
 
         Returns
         -------
         dict
-            The current weather data.
+            Raw forecast data from NWS API.
+
+        Raises
+        ------
+        Exception
+            If unable to retrieve forecast data.
         """
-        self._get_forecast()
-        return self._parse_forecast()
+        # Get the location grid coordinates
+        location = self._get_location()
+
+        # Get the URL for the forecast
+        url = f"{BASE_API_URL}{GRIDPOINTS_URL}{location}/{FORECAST_URL}"
+        logger.debug(f"Fetching NWS forecast from: {url}")
+
+        # Get and return the forecast data with retry
+        forecast_data = get_json_requests_retry(url)
+        logger.info("NWS forecast data retrieved successfully")
+
+        return forecast_data
+
+    def _parse_weather_data(self, raw_data: dict) -> WeatherData:
+        """Parse NWS forecast data into standardized format.
+
+        Parameters
+        ----------
+        raw_data : dict
+            Raw forecast data from NWS API.
+
+        Returns
+        -------
+        WeatherData
+            Parsed weather data.
+
+        Note
+        ----
+        This is a placeholder implementation that needs to be completed.
+        Currently returns empty/default values.
+        """
+        # TODO: Complete implementation
+        # Find the forecast periods for today and tonight
+        periods = raw_data.get("properties", {}).get("periods", [])
+
+        today, tonight = None, None
+        for period in periods:
+            if period["name"] == "Today":
+                today = period
+            elif period["name"] == "Tonight":
+                tonight = period
+
+        # Placeholder: Return minimal data structure
+        # This needs proper implementation to extract temperature, precipitation, etc.
+        weather_data: WeatherData = {
+            "temperature": today.get("temperature", 70.0) if today else 70.0,
+            "temperature_min": tonight.get("temperature", 50.0) if tonight else 50.0,
+            "temperature_max": today.get("temperature", 75.0) if today else 75.0,
+            "precipitation": 0,
+            "precipitation_min": 0,
+            "precipitation_max": 0,
+            "sunrise": "06:30",  # TODO: Implement sunrise/sunset calculation
+            "sunset": "18:30",
+        }
+
+        logger.warning(
+            "NWS weather data parsing is incomplete - using placeholder values"
+        )
+        return weather_data

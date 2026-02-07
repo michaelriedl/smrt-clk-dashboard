@@ -3,8 +3,6 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-import time
-
 import dotenv
 import pytest
 
@@ -28,10 +26,9 @@ def test_init(latitude, longitude):
     weather = WeatherAPINWS(latitude=latitude, longitude=longitude)
     assert weather.latitude == latitude
     assert weather.longitude == longitude
-    assert weather.current_date == time.strftime("%Y-%m-%d")
     assert weather._location_cache is None
-    assert weather._forecast_cache is None
-    assert weather._forecast_cache_date is None
+    assert weather._weather_cache is None
+    assert weather._cache_timestamp is None
 
 
 @pytest.mark.parametrize(
@@ -52,10 +49,9 @@ def test_init_type_error(latitude, longitude):
         weather = WeatherAPINWS(latitude=latitude, longitude=longitude)
         assert weather.latitude == latitude
         assert weather.longitude == longitude
-        assert weather.current_date == time.strftime("%Y-%m-%d")
         assert weather._location_cache is None
-        assert weather._forecast_cache is None
-        assert weather._forecast_cache_date is None
+        assert weather._weather_cache is None
+        assert weather._cache_timestamp is None
 
 
 def test_setters():
@@ -114,14 +110,8 @@ def test_get_location():
     assert weather._location_cache is not None
     assert weather._location_cache == "OKX/33,35"
 
-    # Test latitude and longitude outside of the valid range
-    weather = WeatherAPINWS(latitude=0, longitude=0)
-    # Check that warning is raised
-    with pytest.warns(UserWarning):
-        weather._get_location()
 
-
-def test_get_forecast():
+def test_get_current_weather():
     # Load the .env file
     dotenv.load_dotenv(os.path.join(TEST_DIR, "..", ".env"))
     # Get the LAT_LON_LOCATION variable
@@ -132,14 +122,23 @@ def test_get_forecast():
     longitude = float(longitude)
     # Create the WeatherAPI object
     weather = WeatherAPINWS(latitude=latitude, longitude=longitude)
-    # Get the forecast data
-    weather._get_forecast()
-    # Check the forecast cache
-    assert weather._forecast_cache is not None
-    assert weather._forecast_cache_date == time.strftime("%Y-%m-%d-%H-%M-%S")
+    # Get the current weather data
+    result = weather.get_current_weather()
+    # Check the result
+    assert result is not None
+    assert "status" in result
+    assert result["status"] == "ok"
+    # Check the cache was populated
+    assert weather._weather_cache is not None
+    assert weather._cache_timestamp is not None
+
+    # Test getting weather with cached data
+    cached_result = weather.get_current_weather()
+    assert cached_result["status"] == "cached"
 
     # Test latitude and longitude outside of the valid range
     weather = WeatherAPINWS(latitude=0, longitude=0)
-    # Check that warning is raised
-    with pytest.warns(UserWarning):
-        weather._get_forecast()
+    # Check that error status is returned for invalid coordinates
+    result = weather.get_current_weather()
+    assert result["status"] == "error"
+    assert "error_message" in result
