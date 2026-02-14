@@ -18,8 +18,8 @@ class WeatherAPIMock(WeatherAPI):
 
     def __init__(
         self,
-        latitude: float = 39.7392,
-        longitude: float = -104.9903,
+        latitude: float = 39.9622222,
+        longitude: float = -83.0016667,
         cache_duration: int = 900,
         scenario: str = "sunny",
     ):
@@ -28,9 +28,9 @@ class WeatherAPIMock(WeatherAPI):
         Parameters
         ----------
         latitude : float, optional
-            The latitude of the location (default: Denver, CO).
+            The latitude of the location (default: Columbus, OH).
         longitude : float, optional
-            The longitude of the location (default: Denver, CO).
+            The longitude of the location (default: Columbus, OH).
         cache_duration : int, optional
             Cache duration in seconds (default: 900 = 15 minutes).
         scenario : str, optional

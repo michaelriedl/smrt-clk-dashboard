@@ -13,8 +13,8 @@ class Config:
 
     def __init__(
         self,
-        latitude: str = "40.0931191",
-        longitude: str = "-83.017962",
+        latitude: str = "39.9622222",
+        longitude: str = "-83.0016667",
         api_key: str | None = None,
         width: int = 480,
         height: int = 272,
