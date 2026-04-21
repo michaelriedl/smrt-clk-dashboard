@@ -234,7 +234,9 @@ class WeatherAPINWS(WeatherAPI):
             mm = int(iso_timestamp[-2:])
             return sign * (hh + mm / 60)
         except (IndexError, ValueError):
-            logger.warning("Could not parse UTC offset from timestamp; using system local time")
+            logger.warning(
+                "Could not parse UTC offset from timestamp; using system local time"
+            )
             utcoffset = datetime.now().astimezone().utcoffset()
             return utcoffset.total_seconds() / 3600 if utcoffset is not None else 0.0
 
