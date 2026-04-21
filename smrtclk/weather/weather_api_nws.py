@@ -1,6 +1,6 @@
 import logging
 import math
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -235,7 +235,8 @@ class WeatherAPINWS(WeatherAPI):
             return sign * (hh + mm / 60)
         except (IndexError, ValueError):
             logger.warning("Could not parse UTC offset from timestamp; using system local time")
-            return datetime.now().astimezone().utcoffset().total_seconds() / 3600
+            utcoffset = datetime.now().astimezone().utcoffset()
+            return utcoffset.total_seconds() / 3600 if utcoffset is not None else 0.0
 
     def _calculate_sunrise_sunset(self, utc_offset_hours: float) -> tuple[str, str]:
         """Calculate sunrise and sunset times using a simplified astronomical formula.
